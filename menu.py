@@ -42,20 +42,26 @@ CONFIG_PATH = BASE_DIR / "config.json"
 # Struttura relativa attesa dentro la cartella SharePoint.
 # Le chiavi corrispondono alle variabili PATH_* del vecchio codice.
 _REL_PATHS = {
-    "RAW_FILES":              "SCRIPT/00_RAW_FILE",
+    "RAW_FILES"                 :"SCRIPT/00_RAW_FILE",
     # BUSINESS
-    "FORMATTA_FCST":          "SCRIPT/BUSINESS/00_FORMATTA_FCST/script/FORMATTA_FILE_FCST.py",
-    "FCST":                   "SCRIPT/BUSINESS/01_FCST_Business/script/CREA_FCST.py",
-    "APPUNTAMENTI_SETTIMANA": "SCRIPT/BUSINESS/02_APPUNTAMENTI_SETTIMANA/script/ESTRAI_APPUNTMANETI_SETTIMANA.py",
-    "FORMATTA_GARA":          "SCRIPT/BUSINESS/03_FORMATTA_GARA/script/formatta_gara.py",
-    "FORMATTA_OPPORTUNITA":   "SCRIPT/BUSINESS/04_FORMATTA_OPPORTUNITA/script/formatta_opportunita.py",
-    "FORMATTA_APPUNTAMENTI":  "SCRIPT/BUSINESS/05_FORMATTA_APPUNTAMENTI/script/formatta_appuntamenti.py",
+    "FORMATTA_FCST"             : "SCRIPT/BUSINESS/00_FORMATTA_FCST/script/FORMATTA_FILE_FCST.py",
+    "FCST"                      : "SCRIPT/BUSINESS/01_FCST_Business/script/CREA_FCST.py",
+    "APPUNTAMENTI_SETTIMANA"    : "SCRIPT/BUSINESS/02_APPUNTAMENTI_SETTIMANA/script/ESTRAI_APPUNTMANETI_SETTIMANA.py",
+        #altri script
+    "FORMATTA_GARA"             : "SCRIPT/BUSINESS/03_FORMATTA_GARA/script/formatta_gara.py",
+    "FORMATTA_OPPORTUNITA"      : "SCRIPT/BUSINESS/04_FORMATTA_OPPORTUNITA/script/formatta_opportunita.py",
+    "FORMATTA_APPUNTAMENTI"     : "SCRIPT/BUSINESS/05_FORMATTA_APPUNTAMENTI/script/formatta_appuntamenti.py",
+        #campagne
+    "DIVIDI_FILE_CAMPAGNE"      : "SCRIPT/BUSINESS/CAMPAGNE/00_DIVIDI_FILE_CAMPAGNE/DIVIDI_CAMPAGNE.py",
+    "AGGREGA_FILE_VENDITORI"    : "SCRIPT/BUSINESS/CAMPAGNE/01_AGGREGA_FILE_VENDITORI/AGGREGA_FILE.py",
+    "AVANZAMENTO_CAMPAGNE"      : "SCRIPT/BUSINESS/CAMPAGNE/02_AVANZAMENTO_CAMPAGNE/?",
+    "REPORT_CAMPAGNE"           : "",
     # CONSUMER
-    "FORMATTA_FILES":         "SCRIPT/CONSUMER/00_FORMATTA_FILE/script/FORMATTA_FILES_NEGOZI.py",
-    "REPORT_PEDONALITA":      "SCRIPT/CONSUMER/02_REPORT_PEDONALITA/script/CREA_REPORT_PEDONALITA.py",
-    "REPORT_MAGAZZINO":       "SCRIPT/CONSUMER/04_REPORT_MAGAZZINO/script/CREA_REPORT_MAGAZZINO.py",
-    "FORMATTA_PEDONALITA":    "SCRIPT/CONSUMER/01_FORMATTA_PEDONALITA/script/FORMATTA_PEDONALITA.py",
-    "FORMATTA_MAGAZZINO":     "SCRIPT/CONSUMER/03_FORMATTA_MAGAZZINO/FORMATTA_MAGAZZINO.py",
+    "FORMATTA_FILES"            : "SCRIPT/CONSUMER/00_FORMATTA_FILE/script/FORMATTA_FILES_NEGOZI.py",
+    "REPORT_PEDONALITA"         : "SCRIPT/CONSUMER/02_REPORT_PEDONALITA/script/CREA_REPORT_PEDONALITA.py",
+    "REPORT_MAGAZZINO"          : "SCRIPT/CONSUMER/04_REPORT_MAGAZZINO/script/CREA_REPORT_MAGAZZINO.py",
+    "FORMATTA_PEDONALITA"       : "SCRIPT/CONSUMER/01_FORMATTA_PEDONALITA/script/FORMATTA_PEDONALITA.py",
+    "FORMATTA_MAGAZZINO"        : "SCRIPT/CONSUMER/03_FORMATTA_MAGAZZINO/FORMATTA_MAGAZZINO.py",
 }
 
 def _build_paths(sharepoint_root: Path) -> dict:
@@ -986,7 +992,7 @@ class Sidebar(QFrame):
             ("Consumer / Negozi", ["Formatta file negozi", "Report magazzino", "Report pedonalità"]),
         ] if pagina_attiva == "giornalieri" else None
         campagne_sottovoci    = [
-            ("Campagne", ["Divisione agente", "Riaggrega", "Avanzamento", "Report"]),
+            ("Campagne", ["Dividi file campagne", "Aggrega file campagne", "?", "?"]),
         ] if pagina_attiva == "campagne" else None
         altro_sottovoci       = [
             ("Business", ["Formatta file Gara", "Formatta file appuntamenti", "Formatta file opportunità"]),
@@ -997,7 +1003,7 @@ class Sidebar(QFrame):
             ("Home",          "🏠", "main",          home_sottovoci),
             ("Giornalieri",   "🔄", "giornalieri",   giornalieri_sottovoci),
             ("Altri script",  "🖋️", "altri script",  altro_sottovoci),
-            ("Campagne (demo)", "📣", "campagne",     campagne_sottovoci),
+            ("Campagne (⚒️ in lavorazione)", "📣", "campagne",     campagne_sottovoci),
         ]
         for testo, icona, nome, sottovoci in nav_items:
             btn = NavButton(testo, icona, lambda n=nome: nav_callback(n),
@@ -1138,7 +1144,7 @@ class PaginaHome(QWidget):
         c_lay.setContentsMargins(0, 0, 0, 0)
         c_lay.setSpacing(28)
         c_lay.addWidget(self._big_card("◈", "Giornalieri",
-            "Formatta file gara, FCST, Appuntamenti e tutti gli script operativi quotidiani.",
+            "Seszione in cui puoi trovare tutti gli script utili per le operazioni quitidiane.\nPuoi trovare sia script inerenti a lato BUSINESS sia a lato CONSUMER",
             "Operatività quotidiana", "giornalieri", nav_callback))
         c_lay.addWidget(self._big_card("◉", "Campagne",
             "Divisione campagne per agente, avanzamento, report e statistiche complete.",
@@ -1242,7 +1248,7 @@ class PaginaGiornalieri(QWidget):
             {"icona": "📊", "titolo": "3. Report pedonalità",
              "desc": "Creazione report per analisi flussi di pedonalità nei punti vendita.",
              "script": paths["REPORT_PEDONALITA"]},
-            {"icona": "📅", "titolo": "4. Performance Negozi",
+            {"icona": "📅", "titolo": "4(⚒️). Performance Negozi",
              "desc": "Creazione report con storico vendite negozi.",
              "script": "altro.py"},
         ]
@@ -1261,30 +1267,49 @@ class PaginaGiornalieri(QWidget):
 
 
 class PaginaCampagne(QWidget):
-    def __init__(self, terminale, parent=None):
+    def __init__(self, terminale, paths: dict, parent=None):
         super().__init__(parent)
         self.setStyleSheet(f"background:{C_BG};")
-        lay = QVBoxLayout(self)
-        lay.setContentsMargins(38, 20, 38, 20)
-        grid_frame = QFrame(); grid_frame.setStyleSheet("background:transparent; border:none;")
-        grid = QGridLayout(grid_frame); grid.setContentsMargins(0, 0, 0, 0); grid.setHorizontalSpacing(0); grid.setVerticalSpacing(0)
-        for col in range(4): grid.setColumnStretch(col, 1)
-        grid.setRowMinimumHeight(0, CARD_HEIGHT + 16)
+        outer = QVBoxLayout(self)
+        outer.setContentsMargins(0, 0, 0, 0)
+        self.scroll = QScrollArea()
+        self.scroll.setWidgetResizable(True)
+        self.scroll.setStyleSheet("QScrollArea { border:none; background:transparent; }")
+        inner = QWidget()
+        inner.setStyleSheet(f"background:{C_BG};")
+        grid = QGridLayout(inner)
+        grid.setContentsMargins(38, 20, 38, 20)
+        grid.setHorizontalSpacing(0)
+        grid.setVerticalSpacing(0)
+        for col in range(12): grid.setColumnStretch(col, 1)
+        row = 0
+        grid.addWidget(crea_section_label("Campagne"), row, 0, 1, 12); row += 1
         cards = [
-            ("👥", "1. Divisione per agente",    "Suddivide automaticamente le campagne tra gli agenti.",          "divisione_campagne.py"),
-            ("📚", "2. Riaggrega per tipologia", "Raggruppa le campagne per categoria e tipologia.",               "riaggrega_tipologia.py"),
-            ("📊", "3. Avanzamento campagne",    "Monitora lo stato di avanzamento di tutte le campagne attive.",  "avanzamento_campagne.py"),
-            ("📋", "4. Report campagne",         "Genera report dettagliati: statistiche, KPI ed esiti campagne.", "report_campagne.py"),
+            {"icona": "👥", "titolo": "1. Divisione per agente",
+             "desc": "Crea n file per quanti sono i venditori presenti nei file Vodafone, generando n fogli quanti sono i file con le diverse CAMPAGNE",
+             "script": paths["DIVIDI_FILE_CAMPAGNE"]},  
+            {"icona": "📚", "titolo": "2. Aggrega per tipologia",
+             "desc": "Raggruppa le campagne per tipologia, da eseguire dopo che i venditori hanno compilato se prenderanno in gestione il cliente",
+             "script": paths["AGGREGA_FILE_VENDITORI"]},
+            {"icona": "📊", "titolo": "3(⚒️). Avanzamento campagne",
+             "desc": "Monitora lo stato di avanzamento di tutte le campagne attive.",
+             "script": paths["AVANZAMENTO_CAMPAGNE"]},
+            {"icona": "📋", "titolo": "4(⚒️). Report campagne",
+             "desc": "Genera report dettagliati: statistiche, KPI ed esiti campagne.",
+             "script": paths["REPORT_CAMPAGNE"]},
         ]
-        for i, (icona, titolo, desc, script) in enumerate(cards):
-            card = ScriptCard(icona, titolo, desc, script, terminale)
+        grid.setRowMinimumHeight(row, CARD_HEIGHT + 16)
+        for i, cfg in enumerate(cards):
+            card = ScriptCard(cfg["icona"], cfg["titolo"], cfg["desc"], cfg["script"], terminale,
+                              cartella=cfg.get("cartella"), nomi_file=cfg.get("nomi_file"))
             wrapper = QWidget(); wrapper.setStyleSheet("background:transparent;")
             w_lay = QVBoxLayout(wrapper); w_lay.setContentsMargins(0 if i == 0 else 8, 0, 0 if i == len(cards)-1 else 8, 0); w_lay.setSpacing(0)
             w_lay.addWidget(card, alignment=Qt.AlignTop)
-            grid.addWidget(wrapper, 0, i)
-        lay.addWidget(grid_frame)
-        lay.addStretch()
-
+            grid.addWidget(wrapper, row, i * 3, 1, 3)
+        row += 1
+        grid.setRowStretch(row, 1)
+        self.scroll.setWidget(inner)
+        outer.addWidget(self.scroll)
 
 class PaginaAltriScript(QWidget):
     def __init__(self, terminale, paths: dict, parent=None):
@@ -1399,7 +1424,7 @@ class MainWindow(QMainWindow):
 
         self.pages["main"]         = PaginaHome(self.mostra_pagina, self.paths)
         self.pages["giornalieri"]  = PaginaGiornalieri(self.terminale, self.paths)
-        self.pages["campagne"]     = PaginaCampagne(self.terminale)
+        self.pages["campagne"]     = PaginaCampagne(self.terminale, self.paths)
         self.pages["altri script"] = PaginaAltriScript(self.terminale, self.paths)
 
         for page in self.pages.values():
