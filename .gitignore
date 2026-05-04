@@ -1,1 +1,12 @@
+# Runtime e librerie compilate
+_runtime/
+dist/
+build/
+
+# File di output
+*.exe
+*.spec
+
+# Config locali
 config.json
+.env
