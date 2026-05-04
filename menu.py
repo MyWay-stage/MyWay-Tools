@@ -1003,7 +1003,7 @@ class Sidebar(QFrame):
             ("Home",          "🏠", "main",          home_sottovoci),
             ("Giornalieri",   "🔄", "giornalieri",   giornalieri_sottovoci),
             ("Altri script",  "🖋️", "altri script",  altro_sottovoci),
-            ("Campagne (⚒️ in lavorazione)", "📣", "campagne",     campagne_sottovoci),
+            ("Campagne (⚒️ in corso)", "📣", "campagne",     campagne_sottovoci),
         ]
         for testo, icona, nome, sottovoci in nav_items:
             btn = NavButton(testo, icona, lambda n=nome: nav_callback(n),
@@ -1288,13 +1288,13 @@ class PaginaCampagne(QWidget):
             {"icona": "👥", "titolo": "1. Divisione per agente",
              "desc": "Crea n file per quanti sono i venditori presenti nei file Vodafone, generando n fogli quanti sono i file con le diverse CAMPAGNE",
              "script": paths["DIVIDI_FILE_CAMPAGNE"]},  
-            {"icona": "📚", "titolo": "2. Aggrega per tipologia",
-             "desc": "Raggruppa le campagne per tipologia, da eseguire dopo che i venditori hanno compilato se prenderanno in gestione il cliente",
+            {"icona": "📚", "titolo": "2. Riaggrega file Campagne",
+             "desc": "Riaggrega i file delle campagne come in origine.\nPermette 2 funzionalità:\n 1 - Legge i dati dalle cartelle di ogni venditore (standard)\n 2 - Legge i file dalla cartella 'FILE RICEVUTI' (bisogna selezionarlo dal codice)",
              "script": paths["AGGREGA_FILE_VENDITORI"]},
-            {"icona": "📊", "titolo": "3(⚒️). Avanzamento campagne",
+            {"icona": "📊", "titolo": "3(⚒️). Avanzamento Campagne",
              "desc": "Monitora lo stato di avanzamento di tutte le campagne attive.",
              "script": paths["AVANZAMENTO_CAMPAGNE"]},
-            {"icona": "📋", "titolo": "4(⚒️). Report campagne",
+            {"icona": "📋", "titolo": "4(⚒️). Report Campagne",
              "desc": "Genera report dettagliati: statistiche, KPI ed esiti campagne.",
              "script": paths["REPORT_CAMPAGNE"]},
         ]
