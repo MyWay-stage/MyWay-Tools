@@ -1151,7 +1151,7 @@ class PaginaHome(QWidget):
         c_lay.addWidget(self._big_card("◈", "Giornalieri",
             "Seszione in cui puoi trovare tutti gli script utili per le operazioni quitidiane.\nPuoi trovare sia script inerenti a lato BUSINESS sia a lato CONSUMER",
             "Operatività quotidiana", "giornalieri", nav_callback))
-        c_lay.addWidget(self._big_card("◉", "Campagne",
+        c_lay.addWidget(self._big_card("◉", "prova",
             "Divisione campagne per agente, avanzamento, report e statistiche complete.",
             "Gestione campagne", "campagne", nav_callback))
         lay.addWidget(cards_frame)
