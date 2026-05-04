@@ -10,6 +10,11 @@ import subprocess
 from pathlib import Path
 from datetime import datetime
 
+#Per Auto-Updater
+import updater
+updater.check_and_update()
+
+
 from PySide6.QtWidgets import (
     QApplication, QWidget, QMainWindow, QVBoxLayout, QHBoxLayout,
     QPushButton, QLabel, QFrame, QScrollArea, QTextEdit,

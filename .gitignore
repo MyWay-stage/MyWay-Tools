@@ -1,12 +1,19 @@
-# Runtime e librerie compilate
+# Build / runtime
+
 _runtime/
 dist/
 build/
 
-# File di output
+# Output
 *.exe
-*.spec
 
-# Config locali
-config.json
+# Cache Python
+__pycache__/
+*.pyc
+
+# Config locali (solo se davvero locali)
 .env
+
+#logo e config
+*.json
+*.ico

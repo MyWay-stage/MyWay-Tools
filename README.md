@@ -74,3 +74,13 @@ Questo permette di:
 La build dell’eseguibile è effettuata tramite PyInstaller utilizzando il file `.spec`.
 
 ---
+
+COME AGGIORNARE LA VERSIONE
+
+1. Modifica il codice in menu.py
+2. Aggiorna version.txt → es. 1.0.1
+3. Aggiorna AppVersion in setup.iss → 1.0.1
+4. $ pyinstaller Menu.spec
+5. Apri Inno Setup → compila setup.iss → ottieni setup.exe
+6. GitHub → crea Release v1.0.1 → carica setup.exe
+7. $ git add version.txt && git commit -m "v1.0.1" && git push
