@@ -1506,10 +1506,6 @@ if __name__ == "__main__":
         QScrollBar::handle:vertical { background: gray; }
     """)
 
-    # ── Auto-update (PRIMA dello splash) ──────────────────────
-    import updater
-    updater.check_and_update(app)   
-
     # ── Splash ────────────────────────────────────────────────
     splash = SplashScreen()
     splash.show()
@@ -1539,4 +1535,9 @@ if __name__ == "__main__":
     window = MainWindow(sharepoint_root)
     QTimer.singleShot(1800, lambda: (splash.finish(window), window.show()))
 
+    # ── Check aggiornamento DOPO che l'app è visibile ─────────
+    QTimer.singleShot(2500, lambda: (
+        __import__('updater').check_and_update(app)
+    ))
+    
     sys.exit(app.exec())

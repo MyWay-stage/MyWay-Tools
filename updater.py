@@ -2,7 +2,6 @@
 import requests
 import subprocess
 import sys
-import os
 import tempfile
 import threading
 from packaging import version
@@ -32,129 +31,228 @@ def get_current_version() -> str:
         return "0.0.0"
 
 
-class UpdateWindow:
-    """Finestra di aggiornamento con border radius e ombra."""
+def _mostra_download(app, current: str, latest: str):
+    """Finestra di download con progress bar e border radius."""
+    from PySide6.QtWidgets import (
+        QWidget, QVBoxLayout, QHBoxLayout, QLabel, QProgressBar
+    )
+    from PySide6.QtCore import Qt
+    from PySide6.QtGui import QPixmap, QPainter, QColor, QPainterPath
 
-    def __init__(self, app, current: str, latest: str):
-        from PySide6.QtWidgets import (
-            QWidget, QVBoxLayout, QHBoxLayout, QLabel, QProgressBar
-        )
-        from PySide6.QtCore import Qt
-        from PySide6.QtGui import QPixmap, QPainter, QColor, QPainterPath
-
-        class _RoundedWidget(QWidget):
-            def paintEvent(self_, event):
-                painter = QPainter(self_)
-                painter.setRenderHint(QPainter.Antialiasing)
-                # Ombra
-                for i in range(10, 0, -1):
-                    painter.setBrush(QColor(0, 0, 0, 5 * i))
-                    painter.setPen(Qt.NoPen)
-                    painter.drawRoundedRect(
-                        self_.rect().adjusted(i, i, -i, -i), 14, 14
-                    )
-                # Background bianco
-                path = QPainterPath()
-                path.addRoundedRect(
-                    float(10), float(10),
-                    float(self_.width() - 20), float(self_.height() - 20),
-                    12.0, 12.0
-                )
-                painter.setBrush(QColor("#FFFFFF"))
+    class _RoundedWidget(QWidget):
+        def paintEvent(self_, event):
+            painter = QPainter(self_)
+            painter.setRenderHint(QPainter.Antialiasing)
+            for i in range(10, 0, -1):
+                painter.setBrush(QColor(0, 0, 0, 5 * i))
                 painter.setPen(Qt.NoPen)
-                painter.drawPath(path)
+                painter.drawRoundedRect(self_.rect().adjusted(i, i, -i, -i), 14, 14)
+            path = QPainterPath()
+            path.addRoundedRect(float(10), float(10),
+                                float(self_.width() - 20), float(self_.height() - 20),
+                                12.0, 12.0)
+            painter.setBrush(QColor("#FFFFFF"))
+            painter.setPen(Qt.NoPen)
+            painter.drawPath(path)
 
-        self._app = app
-        self.win = _RoundedWidget()
-        self.win.setWindowTitle("MyWay Tools — Aggiornamento")
-        self.win.setFixedSize(460, 230)
-        self.win.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
-        self.win.setAttribute(Qt.WA_TranslucentBackground)
-        self.win.setStyleSheet("""
-            QLabel       { background: transparent; }
-            QProgressBar {
-                border: none; border-radius: 4px;
-                background-color: #EDEDED; color: transparent;
-            }
-            QProgressBar::chunk { background-color: #E60000; border-radius: 4px; }
-        """)
+    win = _RoundedWidget()
+    win.setWindowTitle("MyWay Tools — Aggiornamento")
+    win.setFixedSize(460, 230)
+    win.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
+    win.setAttribute(Qt.WA_TranslucentBackground)
+    win.setStyleSheet("""
+        QLabel       { background: transparent; }
+        QProgressBar {
+            border: none; border-radius: 4px;
+            background-color: #EDEDED; color: transparent;
+        }
+        QProgressBar::chunk { background-color: #E60000; border-radius: 4px; }
+    """)
 
-        # Layout con margini extra per lasciare spazio all'ombra
-        lay = QVBoxLayout(self.win)
-        lay.setContentsMargins(40, 36, 40, 32)
-        lay.setSpacing(10)
+    lay = QVBoxLayout(win)
+    lay.setContentsMargins(40, 36, 40, 32)
+    lay.setSpacing(10)
 
-        # Barra rossa in cima (posizionata sopra il layout)
-        barra = QWidget(self.win)
-        barra.setGeometry(10, 10, 440, 6)
-        barra.setStyleSheet("""
-            background: #E60000;
-            border-top-left-radius: 12px;
-            border-top-right-radius: 12px;
-        """)
+    barra = QWidget(win)
+    barra.setGeometry(10, 10, 440, 6)
+    barra.setStyleSheet("""
+        background: #E60000;
+        border-top-left-radius: 12px;
+        border-top-right-radius: 12px;
+    """)
 
-        # Logo + nome app
-        logo_row = QHBoxLayout()
-        logo_row.setSpacing(12)
+    logo_row = QHBoxLayout()
+    logo_row.setSpacing(12)
+    icon_path = get_asset('logo.ico')
+    lbl_logo = QLabel()
+    if icon_path.exists():
+        px = QPixmap(str(icon_path)).scaled(38, 38, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        lbl_logo.setPixmap(px)
+    else:
+        lbl_logo.setText("●")
+        lbl_logo.setStyleSheet("color:#E60000; font-size:28px; font-weight:bold;")
+    logo_row.addWidget(lbl_logo)
+    lbl_app = QLabel("MyWay Tools")
+    lbl_app.setStyleSheet("color:#1A1A1A; font-size:18px; font-weight:bold;")
+    logo_row.addWidget(lbl_app)
+    logo_row.addStretch()
+    lay.addLayout(logo_row)
 
-        icon_path = get_asset('logo.ico')
-        lbl_logo = QLabel()
-        if icon_path.exists():
-            px = QPixmap(str(icon_path)).scaled(
-                38, 38, Qt.KeepAspectRatio, Qt.SmoothTransformation
-            )
-            lbl_logo.setPixmap(px)
-        else:
-            lbl_logo.setText("●")
-            lbl_logo.setStyleSheet(
-                "color:#E60000; font-size:28px; font-weight:bold;"
-            )
-        logo_row.addWidget(lbl_logo)
+    lbl_info = QLabel(f"Aggiornamento in corso:  {current}  →  {latest}")
+    lbl_info.setStyleSheet("color:#555555; font-size:13px;")
+    lay.addWidget(lbl_info)
+    lay.addSpacing(4)
 
-        lbl_app = QLabel("MyWay Tools")
-        lbl_app.setStyleSheet(
-            "color:#1A1A1A; font-size:18px; font-weight:bold;"
-        )
-        logo_row.addWidget(lbl_app)
-        logo_row.addStretch()
-        lay.addLayout(logo_row)
+    progress = QProgressBar()
+    progress.setRange(0, 100)
+    progress.setValue(0)
+    progress.setFixedHeight(8)
+    lay.addWidget(progress)
 
-        lbl_info = QLabel(f"Aggiornamento disponibile:  {current}  →  {latest}")
-        lbl_info.setStyleSheet("color:#555555; font-size:13px;")
-        lay.addWidget(lbl_info)
+    lbl_status = QLabel("Scaricamento in corso...")
+    lbl_status.setStyleSheet("color:#999999; font-size:12px;")
+    lay.addWidget(lbl_status)
 
-        lay.addSpacing(4)
+    screen = app.primaryScreen().geometry()
+    win.move(
+        (screen.width()  - win.width())  // 2,
+        (screen.height() - win.height()) // 2,
+    )
+    win.show()
+    app.processEvents()
+    return win, progress, lbl_status
 
-        self.progress = QProgressBar()
-        self.progress.setRange(0, 100)
-        self.progress.setValue(0)
-        self.progress.setFixedHeight(8)
-        lay.addWidget(self.progress)
 
-        self.lbl_status = QLabel("Scaricamento in corso...")
-        self.lbl_status.setStyleSheet("color:#999999; font-size:12px;")
-        lay.addWidget(self.lbl_status)
+def _mostra_notifica(app, current: str, latest: str) -> bool:
+    """
+    Popup che chiede all'utente se vuole aggiornare ora o più tardi.
+    Restituisce True se l'utente clicca 'Aggiorna', False se 'Più tardi'.
+    """
+    from PySide6.QtWidgets import (
+        QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton
+    )
+    from PySide6.QtCore import Qt
+    from PySide6.QtGui import QPixmap, QPainter, QColor, QPainterPath
 
-        # Centra sullo schermo
-        screen = app.primaryScreen().geometry()
-        self.win.move(
-            (screen.width()  - self.win.width())  // 2,
-            (screen.height() - self.win.height()) // 2,
-        )
-        self.win.show()
-        app.processEvents()
+    class _RoundedWidget(QWidget):
+        def paintEvent(self_, event):
+            painter = QPainter(self_)
+            painter.setRenderHint(QPainter.Antialiasing)
+            for i in range(10, 0, -1):
+                painter.setBrush(QColor(0, 0, 0, 5 * i))
+                painter.setPen(Qt.NoPen)
+                painter.drawRoundedRect(self_.rect().adjusted(i, i, -i, -i), 14, 14)
+            path = QPainterPath()
+            path.addRoundedRect(float(10), float(10),
+                                float(self_.width() - 20), float(self_.height() - 20),
+                                12.0, 12.0)
+            painter.setBrush(QColor("#FFFFFF"))
+            painter.setPen(Qt.NoPen)
+            painter.drawPath(path)
 
-    def set_progress(self, pct: int):
-        from PySide6.QtCore import QTimer
-        QTimer.singleShot(0, lambda: (
-            self.progress.setValue(pct),
-            self.lbl_status.setText(f"Scaricamento...  {pct}%")
-        ))
+    scelta = {"valore": False}
 
-    def set_installing(self):
-        self.lbl_status.setText("✅  Installazione in corso...")
-        self.progress.setValue(100)
-        self._app.processEvents()
+    win = _RoundedWidget()
+    win.setWindowTitle("MyWay Tools — Aggiornamento disponibile")
+    win.setFixedSize(460, 260)
+    win.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
+    win.setAttribute(Qt.WA_TranslucentBackground)
+    win.setStyleSheet("""
+        QLabel  { background: transparent; }
+        QPushButton {
+            border-radius: 8px; font-size: 14px;
+            font-weight: bold; padding: 10px 20px;
+        }
+    """)
+
+    lay = QVBoxLayout(win)
+    lay.setContentsMargins(40, 36, 40, 32)
+    lay.setSpacing(12)
+
+    # Barra rossa in cima
+    barra = QWidget(win)
+    barra.setGeometry(10, 10, 440, 6)
+    barra.setStyleSheet("""
+        background: #E60000;
+        border-top-left-radius: 12px;
+        border-top-right-radius: 12px;
+    """)
+
+    # Logo + titolo
+    logo_row = QHBoxLayout()
+    logo_row.setSpacing(12)
+    icon_path = get_asset('logo.ico')
+    lbl_logo = QLabel()
+    if icon_path.exists():
+        px = QPixmap(str(icon_path)).scaled(38, 38, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        lbl_logo.setPixmap(px)
+    else:
+        lbl_logo.setText("●")
+        lbl_logo.setStyleSheet("color:#E60000; font-size:28px; font-weight:bold;")
+    logo_row.addWidget(lbl_logo)
+    lbl_app = QLabel("MyWay Tools")
+    lbl_app.setStyleSheet("color:#1A1A1A; font-size:18px; font-weight:bold;")
+    logo_row.addWidget(lbl_app)
+    logo_row.addStretch()
+    lay.addLayout(logo_row)
+
+    # Testo
+    lbl_titolo = QLabel("🎉  Nuova versione disponibile!")
+    lbl_titolo.setStyleSheet("color:#1A1A1A; font-size:15px; font-weight:bold;")
+    lay.addWidget(lbl_titolo)
+
+    lbl_info = QLabel(f"Versione attuale:  <b>{current}</b>   →   Nuova versione:  <b>{latest}</b>")
+    lbl_info.setStyleSheet("color:#555555; font-size:13px;")
+    lay.addWidget(lbl_info)
+
+    lbl_desc = QLabel("L'aggiornamento verrà installato automaticamente.\nL'app si chiuderà e si riaprirà una volta completato.")
+    lbl_desc.setStyleSheet("color:#999999; font-size:12px;")
+    lbl_desc.setWordWrap(True)
+    lay.addWidget(lbl_desc)
+
+    lay.addSpacing(6)
+
+    # Bottoni
+    btn_row = QHBoxLayout()
+    btn_row.setSpacing(12)
+
+    btn_dopo = QPushButton("Più tardi")
+    btn_dopo.setStyleSheet("""
+        QPushButton {
+            background: #F5F5F5; color: #555555;
+            border: 1px solid #E0E0E0;
+        }
+        QPushButton:hover { background: #EBEBEB; }
+    """)
+    btn_dopo.clicked.connect(lambda: win.close())
+
+    btn_aggiorna = QPushButton("🔄  Aggiorna ora")
+    btn_aggiorna.setStyleSheet("""
+        QPushButton {
+            background: #E60000; color: white; border: none;
+        }
+        QPushButton:hover { background: #CC0000; }
+    """)
+    btn_aggiorna.clicked.connect(lambda: (setattr(scelta, 'valore', True), win.close()))
+
+    btn_row.addWidget(btn_dopo)
+    btn_row.addWidget(btn_aggiorna)
+    lay.addLayout(btn_row)
+
+    screen = app.primaryScreen().geometry()
+    win.move(
+        (screen.width()  - win.width())  // 2,
+        (screen.height() - win.height()) // 2,
+    )
+    win.show()
+
+    # Aspetta che l'utente scelga
+    from PySide6.QtCore import QEventLoop
+    loop = QEventLoop()
+    win.destroyed.connect(loop.quit)
+    loop.exec()
+
+    return scelta["valore"]
 
 
 def check_and_update(app) -> bool:
@@ -169,10 +267,14 @@ def check_and_update(app) -> bool:
         if version.parse(latest) <= version.parse(current):
             return False
 
-        # Mostra finestra
-        ui = UpdateWindow(app, current, latest)
+        # ── 1. Chiedi all'utente ───────────────────────────────
+        if not _mostra_notifica(app, current, latest):
+            return False  # "Più tardi" → apre l'app normalmente
 
-        # Download in thread separato
+        # ── 2. Mostra finestra download ────────────────────────
+        win, progress, lbl_status = _mostra_download(app, current, latest)
+
+        # ── 3. Download in thread ──────────────────────────────
         tmp_path  = Path(tempfile.gettempdir()) / "myway_update.exe"
         risultato = {"ok": False, "errore": None}
 
@@ -187,7 +289,11 @@ def check_and_update(app) -> bool:
                         downloaded += len(chunk)
                         if total:
                             pct = int(downloaded / total * 100)
-                            ui.set_progress(pct)
+                            from PySide6.QtCore import QTimer
+                            QTimer.singleShot(0, lambda p=pct: (
+                                progress.setValue(p),
+                                lbl_status.setText(f"Scaricamento...  {p}%")
+                            ))
                 risultato["ok"] = True
             except Exception as e:
                 risultato["errore"] = str(e)
@@ -195,7 +301,6 @@ def check_and_update(app) -> bool:
         thread = threading.Thread(target=_download, daemon=True)
         thread.start()
 
-        # Tieni la GUI responsiva mentre scarica
         while thread.is_alive():
             app.processEvents()
             thread.join(timeout=0.05)
@@ -210,9 +315,11 @@ def check_and_update(app) -> bool:
             f"File: {tmp_path}\nDimensione: {size_mb:.2f} MB\n"
         )
 
-        ui.set_installing()
+        lbl_status.setText("✅  Installazione in corso...")
+        progress.setValue(100)
+        app.processEvents()
 
-        # Installa e riavvia in thread separato (daemon=False → sopravvive a sys.exit)
+        # ── 4. Installa e riavvia in thread (daemon=False) ─────
         def _installa():
             processo = subprocess.Popen([
                 str(tmp_path),
@@ -222,7 +329,6 @@ def check_and_update(app) -> bool:
                 "/CLOSEAPPLICATIONS",
             ])
             processo.wait()
-
             try:
                 import winreg
                 key = winreg.OpenKey(
@@ -233,13 +339,9 @@ def check_and_update(app) -> bool:
                 new_exe = Path(install_path) / "MyWayTools.exe"
                 if new_exe.exists():
                     subprocess.Popen([str(new_exe)])
-                    log_path.write_text(
-                        log_path.read_text() + f"Avviato: {new_exe}\n"
-                    )
+                    log_path.write_text(log_path.read_text() + f"Avviato: {new_exe}\n")
             except Exception as e:
-                log_path.write_text(
-                    log_path.read_text() + f"Errore avvio: {e}\n"
-                )
+                log_path.write_text(log_path.read_text() + f"Errore avvio: {e}\n")
 
         threading.Thread(target=_installa, daemon=False).start()
         sys.exit(0)
