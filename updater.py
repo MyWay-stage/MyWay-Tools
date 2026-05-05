@@ -6,6 +6,7 @@ import sys
 import os
 import tempfile
 from packaging import version
+from pathlib import Path
 
 # URL del tuo repo — modifica con il tuo username e nome repo
 GITHUB_USER = "MyWay-stage"
@@ -14,14 +15,20 @@ GITHUB_REPO = "MyWay-Tools"
 VERSION_URL = f"https://raw.githubusercontent.com/{GITHUB_USER}/{GITHUB_REPO}/main/version.txt"
 SETUP_URL   = f"https://github.com/{GITHUB_USER}/{GITHUB_REPO}/releases/latest/download/setup.exe"
 
-def get_current_version():
-    """Legge la versione dal file locale version.txt accanto all'exe."""
+
+def get_asset(filename: str) -> Path:
+    if getattr(sys, 'frozen', False):
+        exe_dir = Path(sys.executable).parent
+        for candidate in [exe_dir, exe_dir / '_internal']:
+            path = candidate / filename
+            if path.exists():
+                return path
+    return Path(__file__).parent / filename
+
+def get_current_version() -> str:
     try:
-        # Quando compilato con PyInstaller, i file sono accanto all'exe
-        base = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
-        path = os.path.join(base, 'version.txt')
-        with open(path, 'r') as f:
-            return f.read().strip()
+        path = get_asset('version.txt')
+        return path.read_text().strip()
     except Exception:
         return "0.0.0"
 
@@ -35,6 +42,8 @@ def check_and_update(parent_window=None):
         response = requests.get(VERSION_URL, timeout=5)
         latest   = response.text.strip()
         current  = get_current_version()
+
+        print(f"[Updater] Locale: '{current}' | GitHub: '{latest}'")
 
         if version.parse(latest) <= version.parse(current):
             return False  # nessun aggiornamento

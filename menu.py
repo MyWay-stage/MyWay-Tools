@@ -9,7 +9,7 @@ import threading
 import subprocess
 from pathlib import Path
 from datetime import datetime
-
+from updater import get_asset
 #Per Auto-Updater
 import updater
 updater.check_and_update()
@@ -37,12 +37,12 @@ def get_app_dir() -> Path:
     return Path(__file__).parent
 
 BASE_DIR  = get_app_dir()
-ICON_PATH = BASE_DIR / "logo.ico"
+ICON_PATH = get_asset("logo.ico")
 
 # ─────────────────────────────────────────────────────────────
 # CONFIG  ─  lettura / scrittura config.json
 # ─────────────────────────────────────────────────────────────
-CONFIG_PATH = BASE_DIR / "config.json"
+CONFIG_PATH = get_asset("config.json")
 
 # Struttura relativa attesa dentro la cartella SharePoint.
 # Le chiavi corrispondono alle variabili PATH_* del vecchio codice.
