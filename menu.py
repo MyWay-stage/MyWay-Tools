@@ -10,10 +10,6 @@ import subprocess
 from pathlib import Path
 from datetime import datetime
 from updater import get_asset
-#Per Auto-Updater
-import updater
-updater.check_and_update()
-
 
 from PySide6.QtWidgets import (
     QApplication, QWidget, QMainWindow, QVBoxLayout, QHBoxLayout,
@@ -1178,7 +1174,7 @@ class PaginaHome(QWidget):
         c_lay.addWidget(self._big_card("◈", "Giornalieri",
             "Seszione in cui puoi trovare tutti gli script utili per le operazioni quitidiane.\nPuoi trovare sia script inerenti a lato BUSINESS sia a lato CONSUMER",
             "Operatività quotidiana", "giornalieri", nav_callback))
-        c_lay.addWidget(self._big_card("◉", "prova",
+        c_lay.addWidget(self._big_card("◉", "Campagne",
             "Divisione campagne per agente, avanzamento, report e statistiche complete.",
             "Gestione campagne", "campagne", nav_callback))
         lay.addWidget(cards_frame)
@@ -1509,6 +1505,10 @@ if __name__ == "__main__":
         QScrollBar:vertical { background: gray; width: 10px; }
         QScrollBar::handle:vertical { background: gray; }
     """)
+
+    # ── Auto-update (PRIMA dello splash) ──────────────────────
+    import updater
+    updater.check_and_update(app)   
 
     # ── Splash ────────────────────────────────────────────────
     splash = SplashScreen()
