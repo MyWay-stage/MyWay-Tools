@@ -13,7 +13,7 @@ SolidCompression=yes
 CloseApplications=yes
 RestartApplications=no
 ; Se hai un'icona:
-; SetupIconFile=logo.ico
+SetupIconFile=logo.ico
 
 [Files]
 ; Copia tutta la cartella compilata da PyInstaller

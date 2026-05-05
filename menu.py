@@ -28,6 +28,33 @@ from PySide6.QtGui import (
     QIcon, QPixmap, QPainter, QFont, QLinearGradient, QBrush
 )
 
+
+# ── DEBUG TEMPORANEO ──────────────────────────────────────
+def debug_info():
+    exe_dir  = Path(sys.executable).parent
+    internal = exe_dir / '_internal'
+    
+    lines = [
+        f"frozen: {getattr(sys, 'frozen', False)}",
+        f"sys.executable: {sys.executable}",
+        f"exe_dir: {exe_dir}",
+        f"_internal exists: {internal.exists()}",
+        f"version.txt in exe_dir: {(exe_dir / 'version.txt').exists()}",
+        f"version.txt in _internal: {(internal / 'version.txt').exists()}",
+        f"logo.ico in _internal: {(internal / 'logo.ico').exists()}",
+    ]
+    
+    if (internal / 'version.txt').exists():
+        lines.append(f"version letta: {(internal / 'version.txt').read_text().strip()}")
+    
+    msg = "\n".join(lines)
+    
+    # Scrive su file così lo vedi anche senza console
+    (exe_dir / 'debug.txt').write_text(msg)
+
+debug_info()
+# ── FINE DEBUG ────────────────────────────────────────────
+
 # ─────────────────────────────────────────────────────────────
 # APP DIR  (funziona sia da .py che da .exe PyInstaller)
 # ─────────────────────────────────────────────────────────────

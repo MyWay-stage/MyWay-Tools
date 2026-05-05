@@ -38,12 +38,13 @@ def check_and_update(parent_window=None):
     Se sì, scarica e avvia il nuovo setup.exe in modo silenzioso.
     parent_window: finestra tkinter da nascondere durante l'update (opzionale).
     """
+    log_path = Path(sys.executable).parent / 'updater_debug.txt'
     try:
         response = requests.get(VERSION_URL, timeout=5)
         latest   = response.text.strip()
         current  = get_current_version()
 
-        print(f"[Updater] Locale: '{current}' | GitHub: '{latest}'")
+        log_path.write_text(f"locale: {current}\ngithub: {latest}\n")
 
         if version.parse(latest) <= version.parse(current):
             return False  # nessun aggiornamento
