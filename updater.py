@@ -267,20 +267,22 @@ def check_and_update(app) -> bool:
         if version.parse(latest) <= version.parse(current):
             return False
 
-        # ── 1. Chiedi all'utente ───────────────────────────────
         if not _mostra_notifica(app, current, latest):
-            return False  # "Più tardi" → apre l'app normalmente
+            return False
 
-        # ── 2. Mostra finestra download ────────────────────────
         win, progress, lbl_status = _mostra_download(app, current, latest)
 
-        # ── 3. Download in thread ──────────────────────────────
         tmp_path  = Path(tempfile.gettempdir()) / "myway_update.exe"
         risultato = {"ok": False, "errore": None}
 
         def _download():
             try:
-                r = requests.get(SETUP_URL, timeout=60, stream=True)
+                r = requests.get(SETUP_URL, timeout=120, stream=True)
+                # ← NUOVO: controlla che sia davvero un exe
+                content_type = r.headers.get('content-type', '')
+                if 'html' in content_type:
+                    risultato["errore"] = f"GitHub ha restituito HTML invece di un exe. URL: {SETUP_URL}"
+                    return
                 total      = int(r.headers.get('content-length', 0))
                 downloaded = 0
                 with open(tmp_path, 'wb') as f:
@@ -294,6 +296,10 @@ def check_and_update(app) -> bool:
                                 progress.setValue(p),
                                 lbl_status.setText(f"Scaricamento...  {p}%")
                             ))
+                # ← NUOVO: verifica dimensione minima (un exe valido > 100KB)
+                if tmp_path.stat().st_size < 100_000:
+                    risultato["errore"] = f"File scaricato troppo piccolo: {tmp_path.stat().st_size} bytes"
+                    return
                 risultato["ok"] = True
             except Exception as e:
                 risultato["errore"] = str(e)
@@ -305,13 +311,20 @@ def check_and_update(app) -> bool:
             app.processEvents()
             thread.join(timeout=0.05)
 
+        # ← NUOVO: mostra errore all'utente invece di fallire silenziosamente
         if not risultato["ok"]:
-            log_path.write_text(f"Errore download: {risultato['errore']}\n")
+            errore_msg = risultato.get("errore", "Errore sconosciuto")
+            log_path.write_text(log_path.read_text() + f"\nErrore download: {errore_msg}\n")
+            lbl_status.setText(f"❌  Errore: {errore_msg}")
+            progress.setValue(0)
+            app.processEvents()
+            import time; time.sleep(3)
+            win.close()
             return False
 
         size_mb = tmp_path.stat().st_size / 1024 / 1024
         log_path.write_text(
-            f"locale: {current}\ngithub: {latest}\n"
+            log_path.read_text() +
             f"File: {tmp_path}\nDimensione: {size_mb:.2f} MB\n"
         )
 
@@ -319,36 +332,42 @@ def check_and_update(app) -> bool:
         progress.setValue(100)
         app.processEvents()
 
-        # ── 4. Installa e riavvia in thread (daemon=False) ─────
         def _installa():
-            processo = subprocess.Popen([
-                str(tmp_path),
-                "/VERYSILENT",
-                "/SUPPRESSMSGBOXES",
-                "/NORESTART",
-                "/CLOSEAPPLICATIONS",
-            ])
-            processo.wait()
             try:
-                import winreg
-                key = winreg.OpenKey(
-                    winreg.HKEY_LOCAL_MACHINE,
-                    r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\MyWay Tools_is1"
-                )
-                install_path, _ = winreg.QueryValueEx(key, "InstallLocation")
-                new_exe = Path(install_path) / "MyWayTools.exe"
-                if new_exe.exists():
-                    subprocess.Popen([str(new_exe)])
-                    log_path.write_text(log_path.read_text() + f"Avviato: {new_exe}\n")
+                processo = subprocess.Popen([
+                    str(tmp_path),
+                    "/VERYSILENT",
+                    "/SUPPRESSMSGBOXES",
+                    "/NORESTART",
+                    "/CLOSEAPPLICATIONS",
+                ])
+                processo.wait()
+                try:
+                    import winreg
+                    key = winreg.OpenKey(
+                        winreg.HKEY_LOCAL_MACHINE,
+                        r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\MyWay Tools_is1"
+                    )
+                    install_path, _ = winreg.QueryValueEx(key, "InstallLocation")
+                    new_exe = Path(install_path) / "MyWayTools.exe"
+                    if new_exe.exists():
+                        subprocess.Popen([str(new_exe)])
+                        log_path.write_text(log_path.read_text() + f"Avviato: {new_exe}\n")
+                    else:
+                        log_path.write_text(log_path.read_text() + f"Exe non trovato in: {install_path}\n")
+                except Exception as e:
+                    log_path.write_text(log_path.read_text() + f"Errore avvio post-install: {e}\n")
             except Exception as e:
-                log_path.write_text(log_path.read_text() + f"Errore avvio: {e}\n")
+                log_path.write_text(log_path.read_text() + f"Errore installer: {e}\n")
 
         threading.Thread(target=_installa, daemon=False).start()
+        import time; time.sleep(1)  # ← dai tempo al thread di partire prima di sys.exit
         sys.exit(0)
 
     except requests.exceptions.ConnectionError:
         log_path.write_text("Nessuna connessione\n")
     except Exception as e:
-        log_path.write_text(f"Errore: {e}\n")
+        import traceback
+        log_path.write_text(f"Errore generale: {e}\n{traceback.format_exc()}\n")
 
     return False
