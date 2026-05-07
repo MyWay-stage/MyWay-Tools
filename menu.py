@@ -82,7 +82,7 @@ _REL_PATHS = {
         #campagne
     "DIVIDI_FILE_CAMPAGNE"      : "SCRIPT/BUSINESS/CAMPAGNE/00_DIVIDI_FILE_CAMPAGNE/DIVIDI_CAMPAGNE.py",
     "AGGREGA_FILE_VENDITORI"    : "SCRIPT/BUSINESS/CAMPAGNE/01_AGGREGA_FILE_VENDITORI/AGGREGA_FILE.py",
-    "AVANZAMENTO_CAMPAGNE"      : "SCRIPT/BUSINESS/CAMPAGNE/02_AVANZAMENTO_CAMPAGNE/?",
+    "PRESA_IN_CARICO"           : "SCRIPT/BUSINESS/CAMPAGNE/02_CONTROLLA_PRESA_IN_CARICO/PRESA_IN_CARICO.py",
     "REPORT_CAMPAGNE"           : "",
     # CONSUMER
     "FORMATTA_FILES"            : "SCRIPT/CONSUMER/00_FORMATTA_FILE/script/FORMATTA_FILES_NEGOZI.py",
@@ -1020,7 +1020,7 @@ class Sidebar(QFrame):
             ("Consumer / Negozi", ["Formatta file negozi", "Report magazzino", "Report pedonalità"]),
         ] if pagina_attiva == "giornalieri" else None
         campagne_sottovoci    = [
-            ("Campagne", ["Dividi file campagne", "Aggrega file campagne", "?", "?"]),
+            ("Campagne", ["Dividi file campagne", "Aggrega file campagne", "Presa in carico cliente", "?"]),
         ] if pagina_attiva == "campagne" else None
         altro_sottovoci       = [
             ("Business", ["Formatta file Gara", "Formatta file appuntamenti", "Formatta file opportunità"]),
@@ -1319,9 +1319,9 @@ class PaginaCampagne(QWidget):
             {"icona": "📚", "titolo": "2. Riaggrega file Campagne",
              "desc": "Riaggrega i file delle campagne come in origine.\nPermette 2 funzionalità:\n 1 - Legge i dati dalle cartelle di ogni venditore (standard)\n 2 - Legge i file dalla cartella 'FILE RICEVUTI' (bisogna selezionarlo dal codice)",
              "script": paths["AGGREGA_FILE_VENDITORI"]},
-            {"icona": "📊", "titolo": "3(⚒️). Avanzamento Campagne",
-             "desc": "Monitora lo stato di avanzamento di tutte le campagne attive.",
-             "script": paths["AVANZAMENTO_CAMPAGNE"]},
+            {"icona": "💼", "titolo": "3. Presa in carico cliente",
+             "desc": "Legge tutti i file CAMPAGNA dei venditori e in quelli in cui la colonna 'Gestito (Si/No)' è si, lo lascia invariato, mentre se è no, lo assegna a CRM e pubblica il file per raul sul team CRM.\nNb. Da eseguire dopo aver lanciato lo script 2. Aggrega File",
+             "script": paths["PRESA_IN_CARICO"]},
             {"icona": "📋", "titolo": "4(⚒️). Report Campagne",
              "desc": "Genera report dettagliati: statistiche, KPI ed esiti campagne.",
              "script": paths["REPORT_CAMPAGNE"]},
