@@ -351,16 +351,12 @@ def check_and_update(app) -> bool:
                     )
                     install_path, _ = winreg.QueryValueEx(key, "InstallLocation")
                     new_exe = Path(install_path) / "MyWayTools.exe"
-                except Exception:
-                    new_exe = Path(r"C:\MyWayTools\MyWayTools.exe")  # fallback
-
                     if new_exe.exists():
                         subprocess.Popen([str(new_exe)])
-                        log_path.write_text(log_path.read_text() + f"Avviato: {new_exe}\n")
                     else:
                         log_path.write_text(log_path.read_text() + f"Exe non trovato in: {install_path}\n")
                 except Exception as e:
-                    log_path.write_text(log_path.read_text() + f"Errore avvio post-install: {e}\n")
+                    log_path.write_text(log_path.read_text() + f"Errore winreg: {e}\n")                
             except Exception as e:
                 log_path.write_text(log_path.read_text() + f"Errore installer: {e}\n")
 
