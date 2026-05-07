@@ -277,7 +277,8 @@ def check_and_update(app) -> bool:
 
         def _download():
             try:
-                r = requests.get(SETUP_URL, timeout=120, stream=True)
+                r = requests.get(SETUP_URL, timeout=120, stream=True, allow_redirects=True)
+                log_path.write_text(log_path.read_text() + f"Status: {r.status_code}\nURL finale: {r.url}\nContent-type: {r.headers.get('content-type')}\n")
                 # ← NUOVO: controlla che sia davvero un exe
                 content_type = r.headers.get('content-type', '')
                 if 'html' in content_type:
@@ -346,10 +347,13 @@ def check_and_update(app) -> bool:
                     import winreg
                     key = winreg.OpenKey(
                         winreg.HKEY_LOCAL_MACHINE,
-                        r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\MyWay Tools_is1"
+                        r"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\MyWay Tools_is1"
                     )
                     install_path, _ = winreg.QueryValueEx(key, "InstallLocation")
                     new_exe = Path(install_path) / "MyWayTools.exe"
+                except Exception:
+                    new_exe = Path(r"C:\MyWayTools\MyWayTools.exe")  # fallback
+
                     if new_exe.exists():
                         subprocess.Popen([str(new_exe)])
                         log_path.write_text(log_path.read_text() + f"Avviato: {new_exe}\n")
