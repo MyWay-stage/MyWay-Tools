@@ -2,8 +2,8 @@
 
 [Setup]
 AppName=MyWay Tools
-AppVersion=1.0.7
-AppPublisher=Il Tuo Nome
+AppVersion=1.0.8
+AppPublisher=Andrea
 DefaultDirName={pf}\MyWayTools
 DefaultGroupName=MyWay Tools
 OutputDir=installer_output

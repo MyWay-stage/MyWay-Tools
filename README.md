@@ -83,4 +83,4 @@ COME AGGIORNARE LA VERSIONE
 4. python -m PyInstaller Menu.spec --clean
 5. Apri Inno Setup → compila setup.iss → ottieni setup.exe
 6. GitHub → crea Release v1.0.1 → carica setup.exe
-7. $ git add version.txt && git commit -m "v1.0.1" && git push
+7. $ git add version.txt && git commit -m "v1.0.8" && git push
