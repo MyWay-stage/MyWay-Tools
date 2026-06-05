@@ -76,7 +76,7 @@ _REL_PATHS = {
     "FCST"                      : "SCRIPT/BUSINESS/01_FCST_Business/script/CREA_FCST.py",
     "APPUNTAMENTI_SETTIMANA"    : "SCRIPT/BUSINESS/02_APPUNTAMENTI_SETTIMANA/script/ESTRAI_APPUNTMANETI_SETTIMANA.py",
         #altri script
-    "FORMATTA_GARA"             : "SCRIPT/BUSINESS/03_FORMATTA_GARA/script/formatta_gara.py",
+    "FORMATTA_GARA"             : "SCRIPT/BUSINESS/05_FORMATTA_GARA_NEW/AGGREGA_STORICO.py",
     "FORMATTA_OPPORTUNITA"      : "SCRIPT/BUSINESS/04_FORMATTA_OPPORTUNITA/script/formatta_opportunita.py",
     "FORMATTA_APPUNTAMENTI"     : "SCRIPT/BUSINESS/05_FORMATTA_APPUNTAMENTI/script/formatta_appuntamenti.py",
         #campagne
@@ -88,8 +88,14 @@ _REL_PATHS = {
     "FORMATTA_FILES"            : "SCRIPT/CONSUMER/00_FORMATTA_FILE/script/FORMATTA_FILES_NEGOZI.py",
     "REPORT_PEDONALITA"         : "SCRIPT/CONSUMER/02_REPORT_PEDONALITA/script/CREA_REPORT_PEDONALITA.py",
     "REPORT_MAGAZZINO"          : "SCRIPT/CONSUMER/04_REPORT_MAGAZZINO/script/CREA_REPORT_MAGAZZINO.py",
+        #altri script
     "FORMATTA_PEDONALITA"       : "SCRIPT/CONSUMER/01_FORMATTA_PEDONALITA/script/FORMATTA_PEDONALITA.py",
     "FORMATTA_MAGAZZINO"        : "SCRIPT/CONSUMER/03_FORMATTA_MAGAZZINO/FORMATTA_MAGAZZINO.py",
+    "TRACCIAMENTO_ATTIVAZIONI"  : "SCRIPT/CONSUMER/05_AGGREGA_CONTRATTI_ATTIVATI/AGGREGA_FILE.py",
+    "GARA_PISTA_BUSINESS"       : "SCRIPT/CONSUMER/06_RACCOGLI_DATI_GARA_BIZ/SCRIPT/AGGREGA_GARA.py",
+    "TRACCIAMENTO_PISTA_BIZ"    : "SCRIPT/CONSUMER/07_AGGREGA_TRACCIAMENTO_BIZ/AGGREGA_BIZ.py"
+    
+
 }
 
 def _build_paths(sharepoint_root: Path) -> dict:
@@ -1020,11 +1026,12 @@ class Sidebar(QFrame):
             ("Consumer / Negozi", ["Formatta file negozi", "Report magazzino", "Report pedonalità"]),
         ] if pagina_attiva == "giornalieri" else None
         campagne_sottovoci    = [
-            ("Campagne", ["Dividi file campagne", "Aggrega file campagne", "Presa in carico cliente", "?"]),
+            ("Campagne", ["Dividi file campagne", "Aggrega file campagne", "Presa in carico cliente", "?(⚒️)"]),
         ] if pagina_attiva == "campagne" else None
         altro_sottovoci       = [
             ("Business", ["Formatta file Gara", "Formatta file appuntamenti", "Formatta file opportunità"]),
-            ("Consumer / Negozi", ["Formatta pedonalità", "Formatta magazzino", "Formatta performance"])
+            ("Formattazione file negozi", ["Formatta pedonalità", "Formatta magazzino", "Formatta performance(⚒️)"]),
+            ("Tracciamento file negozi", ["Aggrega attivazioni contratti", "Aggrega tracciamento pista business", "Aggrega premio pista business"])
         ] if pagina_attiva == "altri script" else None
 
         nav_items = [
@@ -1357,7 +1364,7 @@ class PaginaAltriScript(QWidget):
         row = 0
         grid.addWidget(crea_section_label("Business"), row, 0, 1, 12); row += 1
         cards_business = [
-            ("🗂️", "1. Formatta file gara",        "Elaborazione singolo file gara",          paths["FORMATTA_GARA"],        paths["RAW_FILES"], "gara*.xlsx"),
+            ("🗂️", "1. Formatta file gara",        "Elaborazione singolo file gara, e aggrega gara attuale al file Storico Gara",          paths["FORMATTA_GARA"],        paths["RAW_FILES"], "gara*.xlsx"),
             ("📈", "2. Formatta file appuntamenti", "Elaborazione singolo file appuntamenti.", paths["FORMATTA_APPUNTAMENTI"], paths["RAW_FILES"], "calendari*.csv"),
             ("📅", "3. Formatta file opportunità",  "Elaborazione singolo file opportunità",   paths["FORMATTA_OPPORTUNITA"],  paths["RAW_FILES"], "opportunit*.csv"),
         ]
@@ -1369,17 +1376,40 @@ class PaginaAltriScript(QWidget):
             w_lay.addWidget(card, alignment=Qt.AlignTop)
             grid.addWidget(wrapper, row, i * 4, 1, 4)
         row += 1
-        grid.addWidget(crea_section_label("Consumer / Negozi"), row, 0, 1, 12); row += 1
+
+        #SEZIONE FILE NEGOZI
+        grid.addWidget(crea_section_label("Formattazione file negozi"), row, 0, 1, 12); row += 1
         cards_consumer = [
             ("🗂️", "1. Formatta pedonalità",  "Formatta e prepara file pedonalità",            paths["FORMATTA_PEDONALITA"], paths["RAW_FILES"], "Giorgio Mandelli*.xlsx"),
             ("🏬", "2. Formatta magazzino",    "Formatta file magazzino e classifica articoli", paths["FORMATTA_MAGAZZINO"],   paths["RAW_FILES"], "VALORE_DEL_MAGAZZINO*.csv"),
-            ("📊", "3. Formatta performance",  "Formatta file performances",                    "",                           paths["RAW_FILES"], ""),
+            ("📊", "3(⚒️). Formatta performance",  "Formatta file performances",                    "",                           paths["RAW_FILES"], ""),
         ]
         grid.setRowMinimumHeight(row, CARD_HEIGHT + 16)
         for i, (icona, titolo, desc, script, cartella, nome_file) in enumerate(cards_consumer):
             card = ScriptCard(icona, titolo, desc, script, terminale, cartella=cartella, nome_file=nome_file)
             wrapper = QWidget(); wrapper.setStyleSheet("background:transparent;")
             w_lay = QVBoxLayout(wrapper); w_lay.setContentsMargins(0 if i == 0 else 8, 0, 0 if i == len(cards_consumer)-1 else 8, 0); w_lay.setSpacing(0)
+            w_lay.addWidget(card, alignment=Qt.AlignTop)
+            grid.addWidget(wrapper, row, i * 4, 1, 4)
+        row += 1
+        grid.addWidget(crea_section_label("Tracciamento file negozi"), row, 0, 1, 12); row += 1
+        cards = [
+            {"icona": "⚡", "titolo": "1. Aggrega attivazioni contratti",
+             "desc": "Aggrega file dei contratti attivati per vedere l'adamento delle vendite",
+             "script": paths["TRACCIAMENTO_ATTIVAZIONI"]},
+            {"icona": "📊", "titolo": "2. Aggrega tracciamento pista business",
+             "desc": "Aggrega i file del tracciamento della pista business nei negozzi, contiene:\n - Foglio DB con tutti i record\n - Foglio venditori/Negozi con tabelle di contingenza\n - foglio Avanzamento per vedere le performance in confronto al target",
+             "script": paths["TRACCIAMENTO_PISTA_BIZ"]},
+            {"icona": "🏆", "titolo": "3. Aggrega premio pista business",
+             "desc": "Aggrega i file relativi al premio mensile delle attivazioni relative alla pista business leggendo i dati dal consuntivo del TRACCIAMENTO DELLA PISTA BUSINESS",
+             "script": paths["GARA_PISTA_BUSINESS"]},
+        ]
+        grid.setRowMinimumHeight(row, CARD_HEIGHT + 16)
+        for i, cfg in enumerate(cards):
+            card = ScriptCard(cfg["icona"], cfg["titolo"], cfg["desc"], cfg["script"], terminale,
+                              cartella=cfg.get("cartella"), nomi_file=cfg.get("nomi_file"))
+            wrapper = QWidget(); wrapper.setStyleSheet("background:transparent;")
+            w_lay = QVBoxLayout(wrapper); w_lay.setContentsMargins(0 if i == 0 else 8, 0, 0 if i == len(cards)-1 else 8, 0); w_lay.setSpacing(0)
             w_lay.addWidget(card, alignment=Qt.AlignTop)
             grid.addWidget(wrapper, row, i * 4, 1, 4)
         row += 1
