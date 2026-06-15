@@ -46,7 +46,9 @@ def debug_info():
     msg = "\n".join(lines)
     
     # Scrive su file così lo vedi anche senza console
-    (exe_dir / 'debug.txt').write_text(msg)
+    debug_path = Path(os.environ["APPDATA"]) / "MyWayTools" / "debug.txt"
+    debug_path.parent.mkdir(parents=True, exist_ok=True)
+    debug_path.write_text(msg)
 
 debug_info()
 # ── FINE DEBUG ────────────────────────────────────────────

@@ -2,7 +2,7 @@
 
 [Setup]
 AppName=MyWay Tools
-AppVersion=1.0.8
+AppVersion=1.0.9
 AppPublisher=Andrea
 DefaultDirName={pf}\MyWayTools
 DefaultGroupName=MyWay Tools
@@ -14,6 +14,7 @@ CloseApplications=yes
 RestartApplications=no
 ; Se hai un'icona:
 SetupIconFile=logo.ico
+PrivilegesRequired=admin
 
 [Files]
 ; Copia tutta la cartella compilata da PyInstaller
