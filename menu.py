@@ -1538,30 +1538,26 @@ if __name__ == "__main__":
         QScrollBar::handle:vertical { background: gray; }
     """)
 
-    # ── Splash ────────────────────────────────────────────────
-    splash = SplashScreen()
-    splash.show()
-    app.processEvents()
-
-    # ── Carica config o chiede la cartella SharePoint ─────────
+    # ── Carica config PRIMA dello splash ──────────────────────
     config = carica_config()
 
     if config is None:
-        # Prima configurazione (o cartella non raggiungibile)
         messaggio = (
             "Cartella SharePoint non raggiungibile o configurazione mancante."
             if CONFIG_PATH.exists()
             else ""
         )
         dlg = ConfigDialog(messaggio)
-        splash.hide()
         if dlg.exec() != QDialog.Accepted or dlg.sharepoint_root is None:
-            sys.exit(0)   # utente ha annullato → chiudi
+            sys.exit(0)
         sharepoint_root = dlg.sharepoint_root
-        splash.show()
-        app.processEvents()
     else:
         sharepoint_root = Path(config["sharepoint_root"])
+
+    # ── Solo dopo la config, mostra lo splash ─────────────────
+    splash = SplashScreen()
+    splash.show()
+    app.processEvents()
 
     # ── Finestra principale ───────────────────────────────────
     window = MainWindow(sharepoint_root)
@@ -1571,5 +1567,5 @@ if __name__ == "__main__":
     QTimer.singleShot(2500, lambda: (
         __import__('updater').check_and_update(app)
     ))
-    
+
     sys.exit(app.exec())
