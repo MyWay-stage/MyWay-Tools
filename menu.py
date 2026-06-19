@@ -78,7 +78,7 @@ _REL_PATHS = {
     "FCST"                      : "SCRIPT/BUSINESS/01_FCST_Business/script/CREA_FCST.py",
     "APPUNTAMENTI_SETTIMANA"    : "SCRIPT/BUSINESS/02_APPUNTAMENTI_SETTIMANA/script/ESTRAI_APPUNTMANETI_SETTIMANA.py",
         #altri script
-    "FORMATTA_GARA"             : "SCRIPT/BUSINESS/05_FORMATTA_GARA_NEW/AGGREGA_STORICO.py",
+    "FORMATTA_GARA"             : "SCRIPT/BUSINESS/09_ESTRAZIONE_ORDINI_API/AGGREGA_STORICO.py",
     "FORMATTA_OPPORTUNITA"      : "SCRIPT/BUSINESS/06_FORMATTA_OPPORTUNITA_NEW/AGGREGA_STORICO.py",
     "FORMATTA_APPUNTAMENTI"     : "SCRIPT/BUSINESS/07_FORMATTA_APPUNTAMENTI_NEW/AGGREGA_STORICO.py",
         #campagne
@@ -1366,13 +1366,22 @@ class PaginaAltriScript(QWidget):
         row = 0
         grid.addWidget(crea_section_label("Business"), row, 0, 1, 12); row += 1
         cards_business = [
-            ("🗂️", "1. Formatta file gara",        "Elaborazione singolo file gara, e aggrega gara attuale al file Storico Gara",          paths["FORMATTA_GARA"],        paths["RAW_FILES"], "gara*.xlsx"),
-            ("📈", "2. Formatta file appuntamenti", "Elaborazione singolo file appuntamenti.", paths["FORMATTA_APPUNTAMENTI"], paths["RAW_FILES"], "Appuntament*.xlsx"),
-            ("📅", "3. Formatta file opportunità",  "Elaborazione singolo file opportunità",   paths["FORMATTA_OPPORTUNITA"],  paths["RAW_FILES"], "opportunit*.csv"),
+            {"icona" : "🗂️", "titolo" : "1. Formatta gara",
+             "desc" : "ESTRAZIONE, ELABORAZIONE E CARICAMENTO, tutto in un colpo solo!\nRisparmia tempo prezioso e fai lavrare il sistema per te: Estrai i dati dal CRM in meno di 40 secondi, elaborali e caricali in modo che tutti possano usarli.\n\nTutto in meno di 2 minuti!!!",
+             "script" : paths["FORMATTA_GARA"]},
+
+            {"icona" : "📈", "titolo" : "2. Formatta file appuntamenti", 
+             "desc" : "Elaborazione singolo file appuntamenti.", 
+             "script" : paths["FORMATTA_APPUNTAMENTI"]},
+
+            {"icona" : "📅", "titolo" : "3. Formatta file opportunità",
+             "desc" : "Elaborazione singolo file opportunità",
+             "script" : paths["FORMATTA_OPPORTUNITA"]},
         ]
-        grid.setRowMinimumHeight(row, CARD_HEIGHT_STATUS + 16)
-        for i, (icona, titolo, desc, script, cartella, nome_file) in enumerate(cards_business):
-            card = ScriptCard(icona, titolo, desc, script, terminale, cartella=cartella, nome_file=nome_file)
+        grid.setRowMinimumHeight(row, CARD_HEIGHT + 16)
+        for i, cfg in enumerate(cards_business):
+            card = ScriptCard(cfg["icona"], cfg["titolo"], cfg["desc"], cfg["script"], terminale,
+                              cartella=cfg.get("cartella"), nomi_file=cfg.get("nomi_file"))
             wrapper = QWidget(); wrapper.setStyleSheet("background:transparent;")
             w_lay = QVBoxLayout(wrapper); w_lay.setContentsMargins(0 if i == 0 else 8, 0, 0 if i == len(cards_business)-1 else 8, 0); w_lay.setSpacing(0)
             w_lay.addWidget(card, alignment=Qt.AlignTop)

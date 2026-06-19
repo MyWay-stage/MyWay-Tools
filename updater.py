@@ -226,7 +226,7 @@ def _mostra_notifica(app, current: str, latest: str) -> bool:
         QPushButton { background: #E60000; color: white; border: none; }
         QPushButton:hover { background: #CC0000; }
     """)
-    btn_aggiorna.clicked.connect(lambda: (setattr(scelta, 'valore', True), win.close()))
+    btn_aggiorna.clicked.connect(lambda: (scelta.__setitem__('valore', True), win.close()))
 
     btn_row.addWidget(btn_dopo)
     btn_row.addWidget(btn_aggiorna)

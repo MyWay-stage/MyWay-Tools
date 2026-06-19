@@ -4,7 +4,7 @@
 
 Questa repository contiene tutto il necessario per eseguire l’applicazione senza dover installare manualmente Python o dipendenze su ogni macchina.
 
-### 📁 `runtime/`
+### 📁 `_runtime/`
 
 Contiene:
 

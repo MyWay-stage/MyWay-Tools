@@ -6,7 +6,6 @@ a = Analysis(
     pathex=[],
     binaries=[],
     datas=[
-        ('config.json', '.'),       # include config nella cartella output
         ('version.txt', '.'),       # include la versione
         ('logo.ico', '.'),
     ],
