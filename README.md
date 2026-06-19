@@ -81,6 +81,7 @@ COME AGGIORNARE LA VERSIONE
 2. Aggiorna version.txt → es. 1.0.1
 3. Aggiorna AppVersion in setup.iss → 1.0.1
 4. python -m PyInstaller Menu.spec --clean
-5. Apri Inno Setup → compila setup.iss → ottieni setup.exe qua
-6. GitHub → crea Release v1.0.1 → carica setup.exe
-7. $ git add version.txt && git commit -m "v1.0.8" && git push
+5. Aggiungi _runtime a dist\MyWayTools.exe\
+6. Apri Inno Setup → compila setup.iss → ottieni setup.exe qua
+7. GitHub → crea Release v1.0.1 → carica setup.exe
+8. $ git add version.txt && git commit -m "v1.0.8" && git push
