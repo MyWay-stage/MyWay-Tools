@@ -74,13 +74,13 @@ CONFIG_PATH = get_asset("config.json")
 _REL_PATHS = {
     "RAW_FILES"                 :"SCRIPT/00_RAW_FILE",
     # BUSINESS
-    "FORMATTA_FCST"             : "SCRIPT/BUSINESS/00_FORMATTA_FCST/script/FORMATTA_FILE_FCST.py",
+    "FORMATTA_FCST"             : "SCRIPT/BUSINESS/08_FORMATTA_FCST_NEW/FORMATTA_FCST.py",
     "FCST"                      : "SCRIPT/BUSINESS/01_FCST_Business/script/CREA_FCST.py",
     "APPUNTAMENTI_SETTIMANA"    : "SCRIPT/BUSINESS/02_APPUNTAMENTI_SETTIMANA/script/ESTRAI_APPUNTMANETI_SETTIMANA.py",
         #altri script
     "FORMATTA_GARA"             : "SCRIPT/BUSINESS/05_FORMATTA_GARA_NEW/AGGREGA_STORICO.py",
-    "FORMATTA_OPPORTUNITA"      : "SCRIPT/BUSINESS/04_FORMATTA_OPPORTUNITA/script/formatta_opportunita.py",
-    "FORMATTA_APPUNTAMENTI"     : "SCRIPT/BUSINESS/05_FORMATTA_APPUNTAMENTI/script/formatta_appuntamenti.py",
+    "FORMATTA_OPPORTUNITA"      : "SCRIPT/BUSINESS/06_FORMATTA_OPPORTUNITA_NEW/AGGREGA_STORICO.py",
+    "FORMATTA_APPUNTAMENTI"     : "SCRIPT/BUSINESS/07_FORMATTA_APPUNTAMENTI_NEW/AGGREGA_STORICO.py",
         #campagne
     "DIVIDI_FILE_CAMPAGNE"      : "SCRIPT/BUSINESS/CAMPAGNE/00_DIVIDI_FILE_CAMPAGNE/DIVIDI_CAMPAGNE.py",
     "AGGREGA_FILE_VENDITORI"    : "SCRIPT/BUSINESS/CAMPAGNE/01_AGGREGA_FILE_VENDITORI/AGGREGA_FILE.py",
@@ -1254,9 +1254,9 @@ class PaginaGiornalieri(QWidget):
         grid.addWidget(crea_section_label("Business"), row, 0, 1, 12); row += 1
         cards_business = [
             {"icona": "🗂️", "titolo": "1. Formatta file gara",
-             "desc":  "Elabora e formatta il file gara.\nNecessita:\n - Gara (Inflow).xlsx\n - Appuntamenti.csv\n - Opportunità.csv",
+             "desc":  "Elabora e formatta il file gara.\nNecessita:\n - Gara (Inflow).xlsx\n - Appuntamenti.xlsx\n - Opportunità.csv",
              "script": paths["FORMATTA_FCST"], "cartella": paths["RAW_FILES"],
-             "nomi_file": ["gara*.xlsx", "calendari*.csv", "opportunit*.csv"]},
+             "nomi_file": ["gara*.xlsx", "Appuntament*.xlsx", "opportunit*.csv"]},
             {"icona": "📈", "titolo": "2. FCST",
              "desc": "Generazione forecast giornaliero con reportistica automatica",
              "script": paths["FCST"]},
@@ -1367,7 +1367,7 @@ class PaginaAltriScript(QWidget):
         grid.addWidget(crea_section_label("Business"), row, 0, 1, 12); row += 1
         cards_business = [
             ("🗂️", "1. Formatta file gara",        "Elaborazione singolo file gara, e aggrega gara attuale al file Storico Gara",          paths["FORMATTA_GARA"],        paths["RAW_FILES"], "gara*.xlsx"),
-            ("📈", "2. Formatta file appuntamenti", "Elaborazione singolo file appuntamenti.", paths["FORMATTA_APPUNTAMENTI"], paths["RAW_FILES"], "calendari*.csv"),
+            ("📈", "2. Formatta file appuntamenti", "Elaborazione singolo file appuntamenti.", paths["FORMATTA_APPUNTAMENTI"], paths["RAW_FILES"], "Appuntament*.xlsx"),
             ("📅", "3. Formatta file opportunità",  "Elaborazione singolo file opportunità",   paths["FORMATTA_OPPORTUNITA"],  paths["RAW_FILES"], "opportunit*.csv"),
         ]
         grid.setRowMinimumHeight(row, CARD_HEIGHT_STATUS + 16)

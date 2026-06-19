@@ -1,4 +1,5 @@
 # updater.py
+import os
 import requests
 import subprocess
 import sys
@@ -12,6 +13,12 @@ GITHUB_REPO = "MyWay-Tools"
 
 VERSION_URL = f"https://raw.githubusercontent.com/{GITHUB_USER}/{GITHUB_REPO}/main/version.txt"
 SETUP_URL   = f"https://github.com/{GITHUB_USER}/{GITHUB_REPO}/releases/latest/download/setup.exe"
+
+# Log sempre in APPDATA, mai accanto all'exe (che potrebbe essere in Program Files)
+def _get_log_path() -> Path:
+    base = Path(os.environ.get("APPDATA", tempfile.gettempdir())) / "MyWayTools"
+    base.mkdir(parents=True, exist_ok=True)
+    return base / "updater_debug.txt"
 
 
 def get_asset(filename: str) -> Path:
@@ -32,7 +39,6 @@ def get_current_version() -> str:
 
 
 def _mostra_download(app, current: str, latest: str):
-    """Finestra di download con progress bar e border radius."""
     from PySide6.QtWidgets import (
         QWidget, QVBoxLayout, QHBoxLayout, QLabel, QProgressBar
     )
@@ -124,14 +130,10 @@ def _mostra_download(app, current: str, latest: str):
 
 
 def _mostra_notifica(app, current: str, latest: str) -> bool:
-    """
-    Popup che chiede all'utente se vuole aggiornare ora o più tardi.
-    Restituisce True se l'utente clicca 'Aggiorna', False se 'Più tardi'.
-    """
     from PySide6.QtWidgets import (
         QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton
     )
-    from PySide6.QtCore import Qt
+    from PySide6.QtCore import Qt, QEventLoop
     from PySide6.QtGui import QPixmap, QPainter, QColor, QPainterPath
 
     class _RoundedWidget(QWidget):
@@ -169,7 +171,6 @@ def _mostra_notifica(app, current: str, latest: str) -> bool:
     lay.setContentsMargins(40, 36, 40, 32)
     lay.setSpacing(12)
 
-    # Barra rossa in cima
     barra = QWidget(win)
     barra.setGeometry(10, 10, 440, 6)
     barra.setStyleSheet("""
@@ -178,7 +179,6 @@ def _mostra_notifica(app, current: str, latest: str) -> bool:
         border-top-right-radius: 12px;
     """)
 
-    # Logo + titolo
     logo_row = QHBoxLayout()
     logo_row.setSpacing(12)
     icon_path = get_asset('logo.ico')
@@ -196,7 +196,6 @@ def _mostra_notifica(app, current: str, latest: str) -> bool:
     logo_row.addStretch()
     lay.addLayout(logo_row)
 
-    # Testo
     lbl_titolo = QLabel("🎉  Nuova versione disponibile!")
     lbl_titolo.setStyleSheet("color:#1A1A1A; font-size:15px; font-weight:bold;")
     lay.addWidget(lbl_titolo)
@@ -212,25 +211,19 @@ def _mostra_notifica(app, current: str, latest: str) -> bool:
 
     lay.addSpacing(6)
 
-    # Bottoni
     btn_row = QHBoxLayout()
     btn_row.setSpacing(12)
 
     btn_dopo = QPushButton("Più tardi")
     btn_dopo.setStyleSheet("""
-        QPushButton {
-            background: #F5F5F5; color: #555555;
-            border: 1px solid #E0E0E0;
-        }
+        QPushButton { background: #F5F5F5; color: #555555; border: 1px solid #E0E0E0; }
         QPushButton:hover { background: #EBEBEB; }
     """)
     btn_dopo.clicked.connect(lambda: win.close())
 
     btn_aggiorna = QPushButton("🔄  Aggiorna ora")
     btn_aggiorna.setStyleSheet("""
-        QPushButton {
-            background: #E60000; color: white; border: none;
-        }
+        QPushButton { background: #E60000; color: white; border: none; }
         QPushButton:hover { background: #CC0000; }
     """)
     btn_aggiorna.clicked.connect(lambda: (setattr(scelta, 'valore', True), win.close()))
@@ -246,8 +239,6 @@ def _mostra_notifica(app, current: str, latest: str) -> bool:
     )
     win.show()
 
-    # Aspetta che l'utente scelga
-    from PySide6.QtCore import QEventLoop
     loop = QEventLoop()
     win.destroyed.connect(loop.quit)
     loop.exec()
@@ -256,13 +247,14 @@ def _mostra_notifica(app, current: str, latest: str) -> bool:
 
 
 def check_and_update(app) -> bool:
-    log_path = Path(sys.executable).parent / 'updater_debug.txt'
+    log_path = _get_log_path()
 
     try:
         response = requests.get(VERSION_URL, timeout=5)
-        latest   = response.text.strip()
-        current  = get_current_version()
-        log_path.write_text(f"locale: {current}\ngithub: {latest}\n")
+        response.raise_for_status()
+        latest  = response.text.strip()
+        current = get_current_version()
+        log_path.write_text(f"locale: {current}\ngithub: {latest}\n", encoding="utf-8")
 
         if version.parse(latest) <= version.parse(current):
             return False
@@ -277,31 +269,48 @@ def check_and_update(app) -> bool:
 
         def _download():
             try:
+                # FIX: allow_redirects=True gestisce i 302 di GitHub automaticamente.
+                # Non controlliamo content-type perché GitHub usa redirect intermedi
+                # con content-type HTML prima di servire il file reale.
                 r = requests.get(SETUP_URL, timeout=120, stream=True, allow_redirects=True)
-                log_path.write_text(log_path.read_text() + f"Status: {r.status_code}\nURL finale: {r.url}\nContent-type: {r.headers.get('content-type')}\n")
-                # ← NUOVO: controlla che sia davvero un exe
-                content_type = r.headers.get('content-type', '')
-                if 'html' in content_type:
-                    risultato["errore"] = f"GitHub ha restituito HTML invece di un exe. URL: {SETUP_URL}"
+
+                log_path.write_text(
+                    log_path.read_text(encoding="utf-8") +
+                    f"HTTP status: {r.status_code}\nURL finale: {r.url}\n",
+                    encoding="utf-8"
+                )
+
+                if r.status_code != 200:
+                    risultato["errore"] = f"HTTP {r.status_code} — impossibile scaricare l'aggiornamento"
                     return
+
                 total      = int(r.headers.get('content-length', 0))
                 downloaded = 0
+
                 with open(tmp_path, 'wb') as f:
                     for chunk in r.iter_content(chunk_size=8192):
-                        f.write(chunk)
-                        downloaded += len(chunk)
-                        if total:
-                            pct = int(downloaded / total * 100)
-                            from PySide6.QtCore import QTimer
-                            QTimer.singleShot(0, lambda p=pct: (
-                                progress.setValue(p),
-                                lbl_status.setText(f"Scaricamento...  {p}%")
-                            ))
-                # ← NUOVO: verifica dimensione minima (un exe valido > 100KB)
-                if tmp_path.stat().st_size < 100_000:
-                    risultato["errore"] = f"File scaricato troppo piccolo: {tmp_path.stat().st_size} bytes"
+                        if chunk:
+                            f.write(chunk)
+                            downloaded += len(chunk)
+                            if total:
+                                pct = int(downloaded / total * 100)
+                                from PySide6.QtCore import QTimer
+                                QTimer.singleShot(0, lambda p=pct: (
+                                    progress.setValue(p),
+                                    lbl_status.setText(f"Scaricamento...  {p}%")
+                                ))
+
+                # Verifica dimensione minima: un exe valido pesa almeno 500KB
+                size = tmp_path.stat().st_size
+                if size < 500_000:
+                    risultato["errore"] = (
+                        f"File scaricato troppo piccolo ({size / 1024:.0f} KB) — "
+                        "probabilmente GitHub ha restituito una pagina di errore."
+                    )
                     return
+
                 risultato["ok"] = True
+
             except Exception as e:
                 risultato["errore"] = str(e)
 
@@ -312,21 +321,24 @@ def check_and_update(app) -> bool:
             app.processEvents()
             thread.join(timeout=0.05)
 
-        # ← NUOVO: mostra errore all'utente invece di fallire silenziosamente
         if not risultato["ok"]:
             errore_msg = risultato.get("errore", "Errore sconosciuto")
-            log_path.write_text(log_path.read_text() + f"\nErrore download: {errore_msg}\n")
-            lbl_status.setText(f"❌  Errore: {errore_msg}")
+            log_path.write_text(
+                log_path.read_text(encoding="utf-8") + f"\nErrore download: {errore_msg}\n",
+                encoding="utf-8"
+            )
+            lbl_status.setText(f"❌  {errore_msg}")
             progress.setValue(0)
             app.processEvents()
-            import time; time.sleep(3)
+            import time; time.sleep(4)
             win.close()
             return False
 
         size_mb = tmp_path.stat().st_size / 1024 / 1024
         log_path.write_text(
-            log_path.read_text() +
-            f"File: {tmp_path}\nDimensione: {size_mb:.2f} MB\n"
+            log_path.read_text(encoding="utf-8") +
+            f"File scaricato: {tmp_path}\nDimensione: {size_mb:.2f} MB\n",
+            encoding="utf-8"
         )
 
         lbl_status.setText("✅  Installazione in corso...")
@@ -354,20 +366,32 @@ def check_and_update(app) -> bool:
                     if new_exe.exists():
                         subprocess.Popen([str(new_exe)])
                     else:
-                        log_path.write_text(log_path.read_text() + f"Exe non trovato in: {install_path}\n")
+                        log_path.write_text(
+                            log_path.read_text(encoding="utf-8") +
+                            f"Exe non trovato in: {install_path}\n",
+                            encoding="utf-8"
+                        )
                 except Exception as e:
-                    log_path.write_text(log_path.read_text() + f"Errore winreg: {e}\n")                
+                    log_path.write_text(
+                        log_path.read_text(encoding="utf-8") + f"Errore winreg: {e}\n",
+                        encoding="utf-8"
+                    )
             except Exception as e:
-                log_path.write_text(log_path.read_text() + f"Errore installer: {e}\n")
+                log_path.write_text(
+                    log_path.read_text(encoding="utf-8") + f"Errore installer: {e}\n",
+                    encoding="utf-8"
+                )
 
         threading.Thread(target=_installa, daemon=False).start()
-        import time; time.sleep(1)  # ← dai tempo al thread di partire prima di sys.exit
+        import time; time.sleep(1)
         sys.exit(0)
 
     except requests.exceptions.ConnectionError:
-        log_path.write_text("Nessuna connessione\n")
+        log_path.write_text("Nessuna connessione a internet — controllo aggiornamenti saltato.\n", encoding="utf-8")
+    except requests.exceptions.HTTPError as e:
+        log_path.write_text(f"Errore HTTP nel controllo versione: {e}\n", encoding="utf-8")
     except Exception as e:
         import traceback
-        log_path.write_text(f"Errore generale: {e}\n{traceback.format_exc()}\n")
+        log_path.write_text(f"Errore generale updater: {e}\n{traceback.format_exc()}\n", encoding="utf-8")
 
     return False
