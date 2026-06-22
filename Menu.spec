@@ -3,22 +3,25 @@ import os
 runtime_path = r'C:\TEMP\_runtime'
 site_packages = os.path.join(runtime_path, 'Lib', 'site-packages')
 
-# Menu.spec
 block_cipher = None
 
 a = Analysis(
     ['menu.py'],
-    pathex=[],
+    pathex=[
+        os.path.dirname(os.path.abspath(SPEC)),
+        runtime_path,
+        site_packages,
+    ],
     binaries=[],
     datas=[
-        ('version.txt', '.'),       # include la versione
+        ('version.txt', '.'),
         ('logo.ico', '.'),
     ],
     hiddenimports=[
         'xlwings',
         'xlrd',
-        'openpyxl',  
-        'pandas', 
+        'openpyxl',
+        'pandas',
         'win32com',
         'win32com.client',
         'pythoncom',
@@ -32,23 +35,20 @@ a = Analysis(
     cipher=block_cipher,
     noarchive=False,
 )
-
 pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
-
 exe = EXE(
     pyz,
     a.scripts,
     [],
-    exclude_binaries=True,          # ← IMPORTANTE: modalità --onedir
+    exclude_binaries=True,
     name='MyWayTools',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
     upx=True,
-    console=False,                  # False = nessuna finestra terminale
-    icon='logo.ico',                # se hai il logo in formato .ico
+    console=False,
+    icon='logo.ico',
 )
-
 coll = COLLECT(
     exe,
     a.binaries,
@@ -57,11 +57,5 @@ coll = COLLECT(
     strip=False,
     upx=True,
     upx_exclude=[],
-    name='MyWayTools',              # ← nome cartella in dist/
+    name='MyWayTools',
 )
-
-pathex=[
-    os.path.dirname(os.path.abspath(SPEC)),
-    runtime_path,
-    site_packages,
-],
