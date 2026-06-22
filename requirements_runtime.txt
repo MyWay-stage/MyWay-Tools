@@ -1,0 +1,10 @@
+pandas
+openpyxl
+xlwings
+xlrd
+pywin32
+colorama
+numpy
+psutil
+requests
+tqdm
