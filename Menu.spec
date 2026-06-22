@@ -1,3 +1,8 @@
+import os
+
+runtime_path = r'C:\TEMP\_runtime'
+site_packages = os.path.join(runtime_path, 'Lib', 'site-packages')
+
 # Menu.spec
 block_cipher = None
 
@@ -12,9 +17,12 @@ a = Analysis(
     hiddenimports=[
         'xlwings',
         'xlrd',
+        'openpyxl',  
+        'pandas', 
         'win32com',
         'win32com.client',
         'pythoncom',
+        'pywintypes',
     ],
     hookspath=[],
     runtime_hooks=[],
@@ -51,3 +59,9 @@ coll = COLLECT(
     upx_exclude=[],
     name='MyWayTools',              # ← nome cartella in dist/
 )
+
+pathex=[
+    os.path.dirname(os.path.abspath(SPEC)),
+    runtime_path,
+    site_packages,
+],
