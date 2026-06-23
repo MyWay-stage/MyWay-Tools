@@ -17,7 +17,7 @@ xcopy /E /I /Y "%RUNTIME%" "%SCRIPT_DIR%dist\MyWayTools\_runtime\"
 if errorlevel 1 ( echo ERRORE: xcopy fallito & pause & exit /b 1 )
 
 echo [4/4] Compilazione installer Inno Setup...
-"C:\Program Files (x86)\Inno Setup 6\ISCC.exe" "%SCRIPT_DIR%setup.iss"
+"C:\Users\Stage\AppData\Local\Programs\Inno Setup 6\ISCC.exe" "%SCRIPT_DIR%setup.iss"
 if errorlevel 1 ( echo ERRORE: Inno Setup fallito & pause & exit /b 1 )
 
 echo BUILD COMPLETATO CON SUCCESSO

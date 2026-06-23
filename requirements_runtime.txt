@@ -8,3 +8,6 @@ numpy
 psutil
 requests
 tqdm
+pyinstaller
+PySide6
+pyarrow
