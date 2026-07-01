@@ -74,13 +74,14 @@ CONFIG_PATH = get_asset("config.json")
 _REL_PATHS = {
     "RAW_FILES"                 :"SCRIPT/00_RAW_FILE",
     # BUSINESS
-    "FORMATTA_FCST"             : "SCRIPT/BUSINESS/08_FORMATTA_FCST_NEW/FORMATTA_FCST.py",
-    "FCST"                      : "SCRIPT/BUSINESS/01_FCST_Business/script/CREA_FCST.py",
+    "FORMATTA_FCST"             : "SCRIPT/BUSINESS/13_ESTRAI_FILE_GARA/ESTRAI_FILE_GARA.py",
+    "FCST"                      : "SCRIPT/BUSINESS/12_FCST_BUSINESS/crea_report_aggregato.py",
     "APPUNTAMENTI_SETTIMANA"    : "SCRIPT/BUSINESS/02_APPUNTAMENTI_SETTIMANA/script/ESTRAI_APPUNTMANETI_SETTIMANA.py",
         #altri script
     "FORMATTA_GARA"             : "SCRIPT/BUSINESS/09_ESTRAZIONE_ORDINI_API/AGGREGA_STORICO.py",
-    "FORMATTA_OPPORTUNITA"      : "SCRIPT/BUSINESS/06_FORMATTA_OPPORTUNITA_NEW/AGGREGA_STORICO.py",
-    "FORMATTA_APPUNTAMENTI"     : "SCRIPT/BUSINESS/07_FORMATTA_APPUNTAMENTI_NEW/AGGREGA_STORICO.py",
+    "FORMATTA_OPPORTUNITA"      : "SCRIPT/BUSINESS/10_ESTRAZIONE_OPP_API/AGGREGA_STORICO.py",
+    "FORMATTA_APPUNTAMENTI"     : "SCRIPT/BUSINESS/11_ESTRAZIONE_APP_API/AGGREGA_STORICO.py",
+    "CHIUSURA_GARA"             : "SCRIPT/BUSINESS/09_ESTRAZIONE_ORDINI_API/CHIUSURA_GARA.py",
         #campagne
     "DIVIDI_FILE_CAMPAGNE"      : "SCRIPT/BUSINESS/CAMPAGNE/00_DIVIDI_FILE_CAMPAGNE/DIVIDI_CAMPAGNE.py",
     "AGGREGA_FILE_VENDITORI"    : "SCRIPT/BUSINESS/CAMPAGNE/01_AGGREGA_FILE_VENDITORI/AGGREGA_FILE.py",
@@ -90,6 +91,7 @@ _REL_PATHS = {
     "FORMATTA_FILES"            : "SCRIPT/CONSUMER/00_FORMATTA_FILE/script/FORMATTA_FILES_NEGOZI.py",
     "REPORT_PEDONALITA"         : "SCRIPT/CONSUMER/02_REPORT_PEDONALITA/script/CREA_REPORT_PEDONALITA.py",
     "REPORT_MAGAZZINO"          : "SCRIPT/CONSUMER/04_REPORT_MAGAZZINO/script/CREA_REPORT_MAGAZZINO.py",
+    "REPORT_TRATTATIVE"         : "SCRIPT/CONSUMER/08_REPORT_TRATT_ENERGIA/REPORT_TRATTATIVE.py",
         #altri script
     "FORMATTA_PEDONALITA"       : "SCRIPT/CONSUMER/01_FORMATTA_PEDONALITA/script/FORMATTA_PEDONALITA.py",
     "FORMATTA_MAGAZZINO"        : "SCRIPT/CONSUMER/03_FORMATTA_MAGAZZINO/FORMATTA_MAGAZZINO.py",
@@ -1031,7 +1033,7 @@ class Sidebar(QFrame):
             ("Campagne", ["Dividi file campagne", "Aggrega file campagne", "Presa in carico cliente", "?(⚒️)"]),
         ] if pagina_attiva == "campagne" else None
         altro_sottovoci       = [
-            ("Business", ["Formatta file Gara", "Formatta file appuntamenti", "Formatta file opportunità"]),
+            ("Business", ["Formatta file Gara", "Formatta file appuntamenti", "Formatta file opportunità", "Chiusura gara"]),
             ("Formattazione file negozi", ["Formatta pedonalità", "Formatta magazzino", "Formatta performance(⚒️)"]),
             ("Tracciamento file negozi", ["Aggrega attivazioni contratti", "Aggrega tracciamento pista business", "Aggrega premio pista business"])
         ] if pagina_attiva == "altri script" else None
@@ -1253,10 +1255,9 @@ class PaginaGiornalieri(QWidget):
         row = 0
         grid.addWidget(crea_section_label("Business"), row, 0, 1, 12); row += 1
         cards_business = [
-            {"icona": "🗂️", "titolo": "1. Formatta file gara",
-             "desc":  "Elabora e formatta il file gara.\nNecessita:\n - Gara (Inflow).xlsx\n - Appuntamenti.xlsx\n - Opportunità.csv",
-             "script": paths["FORMATTA_FCST"], "cartella": paths["RAW_FILES"],
-             "nomi_file": ["gara*.xlsx", "Appuntament*.xlsx", "opportunit*.csv"]},
+            {"icona": "🗂️", "titolo": "1. Estrai file gara",
+             "desc":  "Estrae da API, formatta e carica in un colpo solo gara, opportunità e appuntamenti.",
+             "script": paths["FORMATTA_FCST"]},
             {"icona": "📈", "titolo": "2. FCST",
              "desc": "Generazione forecast giornaliero con reportistica automatica",
              "script": paths["FCST"]},
@@ -1285,9 +1286,9 @@ class PaginaGiornalieri(QWidget):
             {"icona": "📊", "titolo": "3. Report pedonalità",
              "desc": "Creazione report per analisi flussi di pedonalità nei punti vendita.",
              "script": paths["REPORT_PEDONALITA"]},
-            {"icona": "📅", "titolo": "4(⚒️). Performance Negozi",
-             "desc": "Creazione report con storico vendite negozi.",
-             "script": "altro.py"},
+            {"icona": "⚡", "titolo": "4. Report Trattative energia",
+             "desc": "Creazione REPORT_TRACCIAMENTO_TRATTATIVE_ENERGIA\nIntreccia dati di pedonalità e trattative per scoprire quale è il RATIO per punto vendita",
+             "script": paths["REPORT_TRATTATIVE"]},
         ]
         grid.setRowMinimumHeight(row, CARD_HEIGHT + 16)
         for i, cfg in enumerate(cards_consumer):
@@ -1323,13 +1324,13 @@ class PaginaCampagne(QWidget):
         grid.addWidget(crea_section_label("Campagne"), row, 0, 1, 12); row += 1
         cards = [
             {"icona": "👥", "titolo": "1. Divisione per agente",
-             "desc": "Crea n file per quanti sono i venditori presenti nei file Vodafone, generando n fogli quanti sono i file con le diverse CAMPAGNE",
+             "desc": "Da eseguire dopo:\n - Aver asegnato venditore in ogni file\n - aver caricato il file dentro la cartella del periodo di riferimento dentro la cartella campagne",
              "script": paths["DIVIDI_FILE_CAMPAGNE"]},  
             {"icona": "📚", "titolo": "2. Riaggrega file Campagne",
              "desc": "Riaggrega i file delle campagne come in origine.\nPermette 2 funzionalità:\n 1 - Legge i dati dalle cartelle di ogni venditore (standard)\n 2 - Legge i file dalla cartella 'FILE RICEVUTI' (bisogna selezionarlo dal codice)",
              "script": paths["AGGREGA_FILE_VENDITORI"]},
             {"icona": "💼", "titolo": "3. Presa in carico cliente",
-             "desc": "Legge tutti i file CAMPAGNA dei venditori e in quelli in cui la colonna 'Gestito (Si/No)' è si, lo lascia invariato, mentre se è no, lo assegna a CRM e pubblica il file per raul sul team CRM.\nNb. Da eseguire dopo aver lanciato lo script 2. Aggrega File",
+             "desc": "Legge tutti i file CAMPAGNA dei venditori e in quelli in cui la colonna 'Gestito (Si/No)' è si, lo lascia invariato, mentre se è no, lo assegna a CRM e pubblica il file per raul sul team CRM.\nNb. Da eseguire dopo aver lanciato lo script 2. Riaggrega file Campagne",
              "script": paths["PRESA_IN_CARICO"]},
             {"icona": "📋", "titolo": "4(⚒️). Report Campagne",
              "desc": "Genera report dettagliati: statistiche, KPI ed esiti campagne.",
@@ -1367,16 +1368,20 @@ class PaginaAltriScript(QWidget):
         grid.addWidget(crea_section_label("Business"), row, 0, 1, 12); row += 1
         cards_business = [
             {"icona" : "🗂️", "titolo" : "1. Formatta gara",
-             "desc" : "ESTRAZIONE, ELABORAZIONE E CARICAMENTO, tutto in un colpo solo!\nRisparmia tempo prezioso e fai lavrare il sistema per te: Estrai i dati dal CRM in meno di 40 secondi, elaborali e caricali in modo che tutti possano usarli.\n\nTutto in meno di 2 minuti!!!",
+             "desc" : "Estrae dal CRM gara, appuntamenti e opportunità, li elabora e li carica in automatico.",
              "script" : paths["FORMATTA_GARA"]},
 
             {"icona" : "📈", "titolo" : "2. Formatta file appuntamenti", 
-             "desc" : "Elaborazione singolo file appuntamenti.", 
+             "desc" : "Elabora il file appuntamenti estratto dal CRM e lo prepara per l'utilizzo.",
              "script" : paths["FORMATTA_APPUNTAMENTI"]},
 
             {"icona" : "📅", "titolo" : "3. Formatta file opportunità",
-             "desc" : "Elaborazione singolo file opportunità",
+             "desc" : "Elabora il file opportunità estratto dal CRM e lo prepara per l'utilizzo.",
              "script" : paths["FORMATTA_OPPORTUNITA"]},
+
+            {"icona" : "🔒", "titolo" : "4. Chiusura gara",
+             "desc" : "Estrae dal CRM gli ordini attivati nella gara precedente. Un click, poi trovi il file su Teams.",
+             "script" : paths["CHIUSURA_GARA"]},
         ]
         grid.setRowMinimumHeight(row, CARD_HEIGHT + 16)
         for i, cfg in enumerate(cards_business):
@@ -1385,9 +1390,9 @@ class PaginaAltriScript(QWidget):
             wrapper = QWidget(); wrapper.setStyleSheet("background:transparent;")
             w_lay = QVBoxLayout(wrapper); w_lay.setContentsMargins(0 if i == 0 else 8, 0, 0 if i == len(cards_business)-1 else 8, 0); w_lay.setSpacing(0)
             w_lay.addWidget(card, alignment=Qt.AlignTop)
-            grid.addWidget(wrapper, row, i * 4, 1, 4)
+            grid.addWidget(wrapper, row, i * 3, 1, 3)
         row += 1
-
+          
         #SEZIONE FILE NEGOZI
         grid.addWidget(crea_section_label("Formattazione file negozi"), row, 0, 1, 12); row += 1
         cards_consumer = [

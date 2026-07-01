@@ -11,3 +11,4 @@ tqdm
 pyinstaller
 PySide6
 pyarrow
+packaging
